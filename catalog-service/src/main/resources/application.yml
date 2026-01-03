@@ -1,0 +1,17 @@
+spring:
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/catalog-db
+    username: user
+    password: password
+  elasticsearch:
+    uris: http://localhost:9200
+    socket-timeout: 30s
+    connection-timeout: 10s
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
