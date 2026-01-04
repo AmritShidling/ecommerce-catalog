@@ -4,6 +4,7 @@ import com.zenith.catalog.catalog_service.document.ProductDocument;
 import com.zenith.catalog.catalog_service.dto.ProductRequestDTO;
 import com.zenith.catalog.catalog_service.dto.ProductResponseDTO;
 import com.zenith.catalog.catalog_service.entity.ProductEntity;
+import com.zenith.catalog.catalog_service.exception.ProductNotFoundException;
 import com.zenith.catalog.catalog_service.mapper.ProductMapper;
 import com.zenith.catalog.catalog_service.repository.elastic.ProductElasticRepository;
 import com.zenith.catalog.catalog_service.repository.jpa.ProductJpaRepository;
@@ -54,9 +55,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDTO getProduct(Long id) {
         log.info("Performing GET request for product with ID: {}", id);
-        Optional<ProductEntity> productEntity = productJpaRepository.findById(id);
-        return productEntity.map(productMapper::toResponseDTO).orElseThrow(null);
-    }
+        return productJpaRepository.findById(id)
+                .map(productMapper::toResponseDTO)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+   }
 
     @Override
     public void deleteProduct(Long id) {
