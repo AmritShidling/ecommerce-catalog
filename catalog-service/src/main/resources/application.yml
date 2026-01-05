@@ -4,7 +4,7 @@ spring:
       repositories:
         enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/catalog-db
+    url: jdbc:postgresql://localhost:5432/catalog_db
     username: user
     password: password
     driver-class-name: org.postgresql.Driver
@@ -12,6 +12,10 @@ spring:
     uris: http://localhost:9200
     socket-timeout: 30s
     connection-timeout: 10s
+    rest:
+      headers:
+        Content-Type: "application/vnd.elasticsearch+json;compatible-with=8"
+        Accept: "application/vnd.elasticsearch+json;compatible-with=8"
   jpa:
     hibernate:
       ddl-auto: update

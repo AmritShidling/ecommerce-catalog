@@ -1,18 +1,23 @@
 services:
   catalog-db:
     image: 'postgres:16-alpine'
-    container_name: catalog-db
+    container_name: catalog_db
     environment:
-      - POSTGRES_DB=catalog-db
+      - POSTGRES_DB=catalog_db
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
     ports:
       - '5432:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - catalog_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d catalog_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   inventory-db:
     image: 'postgres:16-alpine'
-    container_name: inventory-db
+    container_name: inventory_db
     environment:
       - POSTGRES_DB=inventory_db
       - POSTGRES_USER=user
@@ -20,7 +25,7 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - inventory_data:/var/lib/postgresql/data
   elasticsearch:
     image: 'docker.elastic.co/elasticsearch/elasticsearch:8.11.1'
     container_name: catalog-search
@@ -67,9 +72,9 @@ services:
     ports:
       - "9000:9000"
     environment:
-      # Now Kafdrop uses the INTERNAL port
       KAFKA_BROKERCONNECT: "kafka:29092"
       JVM_OPTS: "-Xms32M -Xmx64M"
 volumes:
-  postgres_data:
+  catalog_data:    # 3. Declare both here
+  inventory_data:
   elastic_data:
