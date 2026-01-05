@@ -1,6 +1,7 @@
 package com.zenith.catalog.catalog_service.service.impl;
 
 import com.zenith.catalog.catalog_service.document.ProductDocument;
+import com.zenith.catalog.catalog_service.dto.ProductCreatedEvent;
 import com.zenith.catalog.catalog_service.dto.ProductRequestDTO;
 import com.zenith.catalog.catalog_service.dto.ProductResponseDTO;
 import com.zenith.catalog.catalog_service.entity.ProductEntity;
@@ -9,8 +10,10 @@ import com.zenith.catalog.catalog_service.mapper.ProductMapper;
 import com.zenith.catalog.catalog_service.repository.elastic.ProductElasticRepository;
 import com.zenith.catalog.catalog_service.repository.jpa.ProductJpaRepository;
 import com.zenith.catalog.catalog_service.service.ProductService;
+import com.zenith.catalog.catalog_service.service.kafka.ProductProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
@@ -25,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductJpaRepository productJpaRepository;
     private final ProductElasticRepository productElasticRepository;
     private final ProductMapper productMapper;
+    private final ProductProducer productProducer;
 
     @Override
     public ProductResponseDTO saveProduct(ProductRequestDTO productRequestDTO) {
@@ -40,6 +44,13 @@ public class ProductServiceImpl implements ProductService {
         catch (Exception e){
             log.error("Failed to sync to Elasticsearch: {}", e.getMessage());
         }
+
+        productProducer.sendProductCreatedEvent(new ProductCreatedEvent(
+                savedProduct.getId(),
+                savedProduct.getName(),
+                savedProduct.getPrice(),
+                0
+        ));
         return productMapper.toResponseDTO(savedProduct);
     }
 
