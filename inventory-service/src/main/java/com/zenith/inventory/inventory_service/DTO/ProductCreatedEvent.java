@@ -1,7 +1,6 @@
-package com.zenith.catalog.catalog_service.dto;
+package com.zenith.inventory.inventory_service.DTO;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 public record ProductCreatedEvent(
         Long id,
