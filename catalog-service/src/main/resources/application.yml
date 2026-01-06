@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: catalog-service
   data:
     elasticsearch:
       repositories:
@@ -32,3 +34,24 @@ spring:
       properties:
         spring.json.add.type.headers: false # Optional: keeps the JSON clean for other services
 
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  oltp:
+    matrics:
+      export:
+        enabled: false
+otel:
+  service:
+    name: catalog-service
+  resource:
+    attributes:
+      service.name: catalog-service
+logging:
+  pattern:
+    # This specific format is what the OTEL starter looks for to inject IDs
+    level: "%5p [${spring.application.name:-}, %X{traceId:-}, %X{spanId:-}]"
