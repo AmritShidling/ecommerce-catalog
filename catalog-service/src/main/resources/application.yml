@@ -27,6 +27,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
   kafka:
+    template:
+      observation-enabled: true
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
