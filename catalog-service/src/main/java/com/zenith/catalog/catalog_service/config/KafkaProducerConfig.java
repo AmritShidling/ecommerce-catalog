@@ -33,7 +33,11 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public KafkaTemplate<String, ProductCreatedEvent> kafkaTemplate(ProducerFactory<String, ProductCreatedEvent> pf) {
+
+        KafkaTemplate<String, ProductCreatedEvent> template = new KafkaTemplate<>(pf);
+
+        template.setObservationEnabled(true);
+        return template;
     }
 }

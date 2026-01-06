@@ -11,6 +11,7 @@ import com.zenith.catalog.catalog_service.repository.elastic.ProductElasticRepos
 import com.zenith.catalog.catalog_service.repository.jpa.ProductJpaRepository;
 import com.zenith.catalog.catalog_service.service.ProductService;
 import com.zenith.catalog.catalog_service.service.kafka.ProductProducer;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -31,6 +32,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductProducer productProducer;
 
     @Override
+    @Observed(name = "get.product")
     public ProductResponseDTO saveProduct(ProductRequestDTO productRequestDTO) {
         log.info("Saving product to Postgres: {}", productRequestDTO.name());
         ProductEntity entity = productMapper.toEntity(productRequestDTO);
