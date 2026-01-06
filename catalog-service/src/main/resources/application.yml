@@ -45,6 +45,10 @@ management:
     matrics:
       export:
         enabled: false
+  defaults:
+    metrics:
+      export:
+        enabled: false
 otel:
   service:
     name: catalog-service
