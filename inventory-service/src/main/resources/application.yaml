@@ -14,6 +14,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
   kafka:
+    listener:
+      observation-enabled: true
     consumer:
       bootstrap-servers: localhost:9092
       group-id: inventory-group
@@ -25,3 +27,30 @@ spring:
         # This part is critical to avoid the constructor failure:
         spring.json.use.type.headers: false
         spring.json.value.default.type: "com.zenith.inventory.inventory_service.DTO.ProductCreatedEvent"
+  application:
+    name: "inventory-service"
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  oltp:
+    matrics:
+      export:
+        enabled: true
+  defaults:
+    metrics:
+      export:
+        enabled: false
+otel:
+  service:
+    name: inventory-service
+  resource:
+    attributes:
+      service.name: inventory-service
+logging:
+  pattern:
+    # This specific format is what the OTEL starter looks for to inject IDs
+    level: "%5p [${spring.application.name:-}, %X{traceId:-}, %X{spanId:-}]"

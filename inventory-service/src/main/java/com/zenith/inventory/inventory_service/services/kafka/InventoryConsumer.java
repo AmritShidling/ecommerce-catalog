@@ -19,7 +19,7 @@ public class InventoryConsumer {
     @KafkaListener(topics = "product-created-events", groupId = "inventory-group")
     public void consumeProductCreated(ProductCreatedEvent event){
         log.info("Received event from Kafka: {}", event);
-
+        log.info("Received event for product: {}. Adjusting stock...", event.name());
         Inventory inventory = inventoryMapper.fromEventToEntity(event);
         inventoryRepository.save(inventory);
         log.info("Initialized inventory for product ID: {}", event.id());
