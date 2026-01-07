@@ -1,4 +1,9 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+  reactor:
+    context-propagation: AUTO
   application:
     name: catalog-service
   data:
@@ -35,6 +40,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false # Optional: keeps the JSON clean for other services
+        interceptor.classes: io.opentelemetry.instrumentation.kafkaclients.v2_6.TracingProducerInterceptor
 
 management:
   tracing:
