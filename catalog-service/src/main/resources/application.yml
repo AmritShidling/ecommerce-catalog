@@ -1,4 +1,19 @@
+
 spring:
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  eureka:
+    client:
+      healthcheck:
+        enabled: true
+      service-url:
+        defaultZone: http://localhost:8761/eureka
+
+    instance:
+      status-page-url-path: /actuator/info
+      health-check-url-path: /actuator/health
+      prefer-ip-address: true
   threads:
     virtual:
       enabled: true
@@ -67,3 +82,5 @@ logging:
   pattern:
     # This specific format is what the OTEL starter looks for to inject IDs
     level: "%5p [${spring.application.name:-}, %X{traceId:-}, %X{spanId:-}]"
+server:
+  port: 8081

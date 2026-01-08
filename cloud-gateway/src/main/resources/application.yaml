@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      mvc:
+        # 1. Enable discovery so you can use service names
+        discovery:
+          locator:
+            enabled: true
+            lower-case-service-id: true
+
+        # 2. Define explicit routes with CORRECT spacing
+        routes:
+          - id: catalog-service
+            uri: lb://CATALOG-SERVICE
+            predicates:
+              - Path=/v1/products/** # Space after the dash is mandatory
+            filters:
+              - StripPrefix=0 # Change to 0 if your service controller handles /v1/products
+          - id: inventory-service
+            uri: lb://INVENTORY-SERVICE
+            predicates:
+              - Path=/v1/inventory/**
+            filters:
+              - StripPrefix=0
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+# 3. Use WebMVC-specific logging to see the truth
+logging:
+  level:
+    org.springframework.cloud.gateway.server.mvc: TRACE
+    org.springframework.web.servlet.function: DEBUG
