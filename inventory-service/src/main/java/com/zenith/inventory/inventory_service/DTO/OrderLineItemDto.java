@@ -1,4 +1,4 @@
-package com.zenith.order.order_service.DTO;
+package com.zenith.inventory.inventory_service.DTO;
 
 import java.math.BigDecimal;
 

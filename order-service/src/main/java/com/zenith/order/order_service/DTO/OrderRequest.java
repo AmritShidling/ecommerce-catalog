@@ -1,4 +1,6 @@
 package com.zenith.order.order_service.DTO;
 
-public class OrderRequest {
+import java.util.List;
+
+public record OrderRequest (Long orderId, List<OrderLineItemDto> orderLineItems){
 }
