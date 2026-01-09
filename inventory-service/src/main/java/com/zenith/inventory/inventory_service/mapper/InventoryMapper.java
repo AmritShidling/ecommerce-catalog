@@ -14,7 +14,7 @@ public interface InventoryMapper {
     Inventory toEntity(InventoryRequestDTO requestDTO);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "productCode", source = "id")
+    @Mapping(target = "skuCode", source = "id")
     @Mapping(target = "reservedQuantity", constant = "0")
     @Mapping(target = "totalQuantity", source = "initialStock")
     Inventory fromEventToEntity(ProductCreatedEvent event);

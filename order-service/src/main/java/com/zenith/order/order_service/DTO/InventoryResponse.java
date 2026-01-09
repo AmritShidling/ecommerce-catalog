@@ -1,4 +1,4 @@
-package com.zenith.inventory.inventory_service.DTO;
+package com.zenith.order.order_service.DTO;
 
-public record InventoryResponse (String skuCode, boolean isInStock){
+public record InventoryResponse(String skuCode, Integer availableQuantity){
 }

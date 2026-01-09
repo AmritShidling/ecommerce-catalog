@@ -30,4 +30,12 @@ public class GatewayConfig {
                 .filter(lb("INVENTORY-SERVICE"))
                 .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> orderRoute() {
+        return route("order-service")
+                .route(path("/v1/order/**"), http())
+                .filter(lb("ORDER-SERVICE"))
+                .build();
+    }
 }
