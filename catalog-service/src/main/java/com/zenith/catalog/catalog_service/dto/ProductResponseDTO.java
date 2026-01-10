@@ -1,5 +1,6 @@
 package com.zenith.catalog.catalog_service.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,5 +11,5 @@ public record ProductResponseDTO (
         String category,
         BigDecimal price,
         LocalDateTime createdAt
-){
+) implements Serializable {
 }

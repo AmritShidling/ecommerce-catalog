@@ -14,6 +14,8 @@ import com.zenith.catalog.catalog_service.service.kafka.ProductProducer;
 import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -66,8 +68,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#id")
     public ProductResponseDTO getProduct(Long id) {
-        log.info("Performing GET request for product with ID: {}", id);
+        log.info("Performing GET request for product with ID: {} from database", id);
         return productJpaRepository.findById(id)
                 .map(productMapper::toResponseDTO)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -77,5 +80,10 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(Long id) {
         log.info("Deleting the product with id: {}", id);
         productJpaRepository.deleteById(id);
+    }
+
+    @CacheEvict(value = "products", key = "#productRequest.id")
+    public void updateProduct(ProductRequestDTO productRequest) {
+        // Update logic here...
     }
 }
