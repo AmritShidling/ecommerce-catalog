@@ -5,6 +5,7 @@ import com.zenith.inventory.inventory_service.DTO.InventoryResponseDTO;
 import com.zenith.inventory.inventory_service.DTO.OrderLineItemDto;
 import com.zenith.inventory.inventory_service.entity.Inventory;
 import com.zenith.inventory.inventory_service.repository.InventoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,14 +28,19 @@ public class InventoryService {
                         new InventoryResponse(inventory.getSkuCode(), inventory.getTotalQuantity())).toList();
     }
 
+    @Transactional
     public void reduceStock(List<OrderLineItemDto> orders){
         for(OrderLineItemDto order: orders){
-            Inventory inventory = inventoryRepository.getBySkuCode(order.skuCode()).orElseThrow(()->new RuntimeException("Item not found"));
-            if(inventory.getTotalQuantity() < order.quantity()){
-                throw new RuntimeException("Not sufficient quantities");
+//            Inventory inventory = inventoryRepository.getBySkuCode(order.skuCode()).orElseThrow(()->new RuntimeException("Item not found"));
+//            if(inventory.getTotalQuantity() < order.quantity()){
+//                throw new RuntimeException("Not sufficient quantities");
+//            }
+//            inventory.setTotalQuantity(inventory.getTotalQuantity() - order.quantity());
+//            inventoryRepository.save(inventory);
+            int rowUpdated = inventoryRepository.decreaseStock(order.skuCode(), order.quantity());
+            if(rowUpdated == 0){
+                throw new RuntimeException("Race condition: Insufficient stock for " + order.skuCode());
             }
-            inventory.setTotalQuantity(inventory.getTotalQuantity() - order.quantity());
-            inventoryRepository.save(inventory);
         }
     }
 
