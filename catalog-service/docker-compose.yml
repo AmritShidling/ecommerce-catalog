@@ -79,6 +79,12 @@ services:
     environment:
       KAFKA_BROKERCONNECT: "kafka:29092"
       JVM_OPTS: "-Xms32M -Xmx64M"
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
 volumes:
   catalog_data:    # 3. Declare both here
   inventory_data:
