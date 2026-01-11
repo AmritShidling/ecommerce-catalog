@@ -2,19 +2,23 @@ package com.zenith.order.order_service.service;
 
 import com.zenith.order.order_service.DTO.InventoryResponse;
 import com.zenith.order.order_service.DTO.OrderLineItemDto;
+import com.zenith.order.order_service.DTO.OrderPlacedEvent;
 import com.zenith.order.order_service.DTO.OrderRequest;
 import com.zenith.order.order_service.client.InventoryClient;
 import com.zenith.order.order_service.entity.OrderEntity;
 import com.zenith.order.order_service.entity.OrderItem;
 import com.zenith.order.order_service.repository.OrderRepository;
+import com.zenith.order.order_service.util.Status;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +27,8 @@ import java.util.stream.Collectors;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
+    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
+//    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
     public OrderEntity findByOrderNumber(String orderNumber) {
         Optional<OrderEntity> order = orderRepository.findByOrderNumber(orderNumber);
 
@@ -53,19 +59,17 @@ public class OrderService {
     @Transactional
     public String placeOrder(OrderRequest orderRequest) {
         OrderEntity order = new OrderEntity();
-        order.setOrderNumber(java.util.UUID.randomUUID().toString());
-        List<String> skuCodes = orderRequest.orderLineItems().stream().map(OrderLineItemDto::skuCode).toList();
-        List<InventoryResponse>  inventoryResponseList = inventoryClient.checkStock(skuCodes);
+        order.setOrderNumber(UUID.randomUUID().toString());
+        order.setStatus(Status.PENDING);
+        order.setUserId(orderRequest.userId());
 
-        validateStock(orderRequest, inventoryResponseList);
-
-        List<OrderItem> orderItems = orderRequest.orderLineItems().stream().map(this::mapToDto).toList();
+        List<OrderItem> orderItems  = orderRequest.orderLineItems().stream().map(this::mapToDto).toList();
         order.setOrderItems(orderItems);
         orderRepository.save(order);
 
-        inventoryClient.reduceStock(orderRequest.orderLineItems());
-        return "Order Placed Successfully";
-
+        OrderPlacedEvent orderPlacedEvent = new OrderPlacedEvent(order.getOrderNumber(), String.valueOf(order.getUserId()), orderItems);
+        kafkaTemplate.send("order-placed-events", orderPlacedEvent);
+        return "Order submitted ( Order number: " + order.getOrderNumber() +")";
     }
 
 

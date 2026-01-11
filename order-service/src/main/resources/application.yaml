@@ -7,6 +7,11 @@ spring:
     password: password
   kafka:
     bootstrap-servers: localhost:9092
+    template:
+      default-topic: order-events
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   jpa:
     hibernate:
       ddl-auto: update
