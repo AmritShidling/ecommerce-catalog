@@ -28,8 +28,8 @@ spring:
       observation-enabled: true
     consumer:
       bootstrap-servers: localhost:9092
-      group-id: inventory-group
-      auto-offset-reset: earliest
+      group-id: inventory-group-v3
+      auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
@@ -37,6 +37,7 @@ spring:
         # This part is critical to avoid the constructor failure:
         spring.json.use.type.headers: false
         spring.json.value.default.type: "com.zenith.inventory.inventory_service.DTO.ProductCreatedEvent"
+    bootstrap-servers: localhost:9092
   application:
     name: "inventory-service"
 management:

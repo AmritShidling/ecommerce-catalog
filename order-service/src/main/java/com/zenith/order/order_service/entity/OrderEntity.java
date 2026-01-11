@@ -22,7 +22,7 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String orderNumber;
-    private Long customerId;
+    private Long userId;
     @Enumerated(EnumType.STRING)
     private Status status;
     private BigDecimal totalAmount;
