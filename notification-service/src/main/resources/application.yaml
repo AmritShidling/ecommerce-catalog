@@ -1,0 +1,19 @@
+server:
+  port: 8084
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      # Use a brand new name to reset your position in the queue
+      group-id: notification-group
+      # 'earliest' means "give me everything currently in the topic"
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        # This tells Kafka to ignore the package name sent by the Order Service
+        spring.json.use.type.headers: false
+        # This tells Kafka which class to force the JSON into
+        spring.json.value.default.type: com.zenith.notification.DTO.OrderPlacedEvent
