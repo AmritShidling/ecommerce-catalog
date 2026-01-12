@@ -12,6 +12,10 @@ spring:
       producer:
         key-serializer: org.apache.kafka.common.serialization.StringSerializer
         value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      consumer:
+        properties:
+          spring.json.trusted.packages: "*"
+          isolation.level: read_uncommitted
   jpa:
     hibernate:
       ddl-auto: update

@@ -7,5 +7,7 @@ public enum Status {
     PAID,
     SHIPPED,
     DELIVERED,
-    REFUNDED
+    REFUNDED,
+    REJECTED,
+    PLACED
 }

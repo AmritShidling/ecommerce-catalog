@@ -16,13 +16,14 @@ public class OrderEventListener {
     @KafkaListener(topics = "order-placed-events", groupId = "inventory-group")
     public void handleOrderPlacedEvent(OrderPlacedEvent event){
         log.info("Received Order Event for Order Number: {}", event.orderNumber());
-
-        try {
-            inventoryService.reduceStock(event.orderLineItems());
-            log.info("Stock reduced successfully for order: {}", event.orderNumber());
-        } catch (Exception e){
-            log.error("Failed to reduce stocker for order {}: {}", event.orderNumber());
-        }
+        inventoryService.handleOrderPlacedEvent(event);
+//
+//        try {
+//            inventoryService.reduceStock(event.orderLineItems());
+//            log.info("Stock reduced successfully for order: {}", event.orderNumber());
+//        } catch (Exception e){
+//            log.error("Failed to reduce stocker for order {}: {}", event.orderNumber());
+//        }
 
     }
 }

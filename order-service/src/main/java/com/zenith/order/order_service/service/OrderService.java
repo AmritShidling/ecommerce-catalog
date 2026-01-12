@@ -62,7 +62,6 @@ public class OrderService {
         order.setOrderNumber(UUID.randomUUID().toString());
         order.setStatus(Status.PENDING);
         order.setUserId(orderRequest.userId());
-        log.info("USer ID ------- {} ", orderRequest.userId());
 
         List<OrderItem> orderItems  = orderRequest.orderLineItems().stream().map(this::mapToDto).toList();
         order.setOrderItems(orderItems);
