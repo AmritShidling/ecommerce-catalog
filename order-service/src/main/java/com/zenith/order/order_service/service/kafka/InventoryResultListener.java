@@ -30,16 +30,6 @@ public class InventoryResultListener {
         orderRepository.save(order);
 
     }
-//        @KafkaListener(topics = "inventory-check-results", groupId = "inventory-result", containerFactory = "kafkaListenerContainerFactory")
-//        public void handleInventoryResult(InventoryResultEvent event){
-//            log.info("Testing DLT for order: {}", event.orderNumber());
-//
-//            // FORCE A FAILURE HERE
-//            throw new RuntimeException("Simulated failure to test DLT");
-//
-//            // The code below won't even run...
-//            // orderRepository.findByOrderNumber(event.orderNumber())...
-//        }
 
     @KafkaListener(
             topics = "inventory-check-results.DLT",
@@ -47,8 +37,12 @@ public class InventoryResultListener {
             containerFactory = "dltContainerFactory"
     )
     public void handleDlt(InventoryResultEvent event) { // Change String to InventoryResultEvent
-        log.error("!!! SAGA RECOVERY SUCCESS !!!");
-        log.error("Order {} failed inventory check and is now in DLT.", event.orderNumber());
-        // In a real app, you might call: orderService.markAsFailed(event.orderNumber());
+        log.error("Compensating Transaction triggered for order: {}", event.orderNumber());
+
+        orderRepository.findByOrderNumber(event.orderNumber()).ifPresent(order ->{
+            order.setStatus(Status.REJECTED);
+            orderRepository.save(order);
+            log.info("Order {} has been successfully rolled back", order.getOrderNumber());
+        });
     }
 }
