@@ -1,20 +1,16 @@
 server:
   port: 8082
+
 spring:
-  eureka:
-    client:
-      healthCheck:
-        enabled: true
-      service-url:
-        defaultZone: http://localhost:8761/eureka
-    instance:
-      prefer-ip-address: true
-      status-page-url-path: /actuator/info
-      health-check-url-path: /actuator/health
+  application:
+    name: "inventory-service"
+
+  # Moved datasource outside of the eureka block
   datasource:
-    url: jdbc:postgresql://localhost:5433/inventory_db
+    url: jdbc:postgresql://${DB_HOST:inventory_db:5432}/inventory_db
     password: password
     username: user
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -23,45 +19,56 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
+
   kafka:
     listener:
       observation-enabled: true
+    bootstrap-servers: kafka-broker:9092
+    producer:
+      bootstrap-servers: kafka-broker:9092
     consumer:
-      bootstrap-servers: localhost:9092
       group-id: inventory-group-v3
       auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
-        # This part is critical to avoid the constructor failure:
         spring.json.use.type.headers: false
         spring.json.value.default.type: "com.zenith.inventory.inventory_service.DTO.ProductCreatedEvent"
-    bootstrap-servers: localhost:9092
-  application:
-    name: "inventory-service"
+
+# MOVED TO TOP LEVEL: This is why it was being ignored
+eureka:
+  client:
+    healthcheck:
+      enabled: true
+    service-url:
+      defaultZone: http://eureka-container:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+
 management:
   tracing:
     sampling:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: "http://localhost:9411/api/v2/spans"
-  oltp:
-    matrics:
+      endpoint: "http://${ZIPKIN_HOST:zipkin}:9411/api/v2/spans"
+  otlp:
+    metrics:
       export:
+        url: "http://${OTEL_HOST:otel-collector}:4318/v1/metrics"
         enabled: true
   defaults:
     metrics:
       export:
         enabled: false
+
 otel:
   service:
     name: inventory-service
-  resource:
-    attributes:
-      service.name: inventory-service
+
 logging:
   pattern:
-    # This specific format is what the OTEL starter looks for to inject IDs
     level: "%5p [${spring.application.name:-}, %X{traceId:-}, %X{spanId:-}]"
