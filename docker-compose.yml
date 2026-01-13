@@ -1,77 +1,73 @@
 services:
-  eureka-server:
-    build: ./eureka-server
-    container_name: eureka-server
-    ports:
-      - "8761:8761"
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    networks:
-      - microservice-network
-
-  api-gateway:
-    build: ./cloud-gateway
-    container_name: api-gateway
-    ports:
-      - "8080:8080"
-    depends_on:
-      eureka-server:
-        condition: service_healthy
+  inventory_db:
+    image: postgres:16
+    container_name: inventory_db
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
     networks:
-      - microservice-network
+      - zenith-net
 
-  catalog-db:
-    image: postgres:16-alpine
-    container_name: catalog-db
+  order_db:
+    image: postgres:16
+    container_name: order_db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=catalog_db
+      POSTGRES_DB: order_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432" # External 5433 maps to Internal 5432
     networks:
-      - microservice-network
+      - zenith-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - zenith-net
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - microservice-network
+      - zenith-net
 
-  kafka:
+  kafka-broker:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: kafka
+    container_name: kafka-broker
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
-      - microservice-network
+      - zenith-net
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
+  kafkadrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafkadrop
+    depends_on:
+      - kafka-broker
     ports:
-      - "8090:8080"
+      - "9000:9000"
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_BROKERCONNECT: kafka-broker:9092
     networks:
-      - microservice-network
+      - zenith-net
 
   zipkin:
     image: openzipkin/zipkin
@@ -79,44 +75,22 @@ services:
     ports:
       - "9411:9411"
     networks:
-      - microservice-network
+      - zenith-net
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    networks:
-      - microservice-network
-
-  catalog-service:
-    build: ./catalog-service
-    container_name: catalog-service
-    # Keep your specific environment mapping
-    environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://catalog-db:5432/catalog_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-config.yaml:/etc/otel-collector-config.yaml
     depends_on:
-      catalog-db:
-        condition: service_started
-      eureka-server:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-      elasticsearch:
-        condition: service_started
+      - zipkin
+    ports:
+      - "4317:4317"
+      - "4318:4318"
     networks:
-      - microservice-network
+      - zenith-net
 
 networks:
-  microservice-network:
-    driver: bridge
+  zenith-net:
+    external: true
