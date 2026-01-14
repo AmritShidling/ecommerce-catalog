@@ -1,36 +1,69 @@
 services:
+  # --- DATABASES ---
   inventory_db:
     image: postgres:16
     container_name: inventory_db
+    pull_policy: if_not_present
     environment:
       POSTGRES_DB: inventory_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d inventory_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - zenith-net
 
   order_db:
     image: postgres:16
     container_name: order_db
+    pull_policy: if_not_present
     environment:
       POSTGRES_DB: order_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
-      - "5433:5432" # External 5433 maps to Internal 5432
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d order_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zenith-net
+
+  catalog_db:
+    image: postgres:16
+    container_name: catalog_db
+    pull_policy: if_not_present
+    environment:
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d catalog_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - zenith-net
 
   redis:
     image: redis:7-alpine
     container_name: redis
+    pull_policy: if_not_present
     ports:
       - "6379:6379"
     networks:
       - zenith-net
 
+  # --- MESSAGING (Kafka & Zookeeper) ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -69,6 +102,7 @@ services:
     networks:
       - zenith-net
 
+  # --- OBSERVABILITY ---
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
@@ -91,6 +125,124 @@ services:
     networks:
       - zenith-net
 
+  # --- APPLICATION SERVICES ---
+  eureka-server:
+    image: zenith/eureka-server:1.0
+    build:
+      context: ./eureka-server
+    pull_policy: build
+    container_name: eureka-container
+    ports:
+      - "8761:8761"
+    networks:
+      - zenith-net
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false # Disables auth for easier local dev
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zenith-net
+
+  cloud-gateway:
+    image: zenith/cloud-gateway:1.0
+    build:
+      context: ./cloud-gateway
+    pull_policy: build
+    container_name: cloud-gateway
+    depends_on:
+      eureka-server:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-container:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER_CASE_SERVICE_ID=true
+    networks:
+      - zenith-net
+
+  order-service:
+    image: zenith/order-service:1.0
+    build:
+      context: ./order-service
+    pull_policy: build
+    container_name: order-service
+    depends_on:
+      order_db:
+        condition: service_healthy
+      kafka-broker:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://order_db:5432/order_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-container:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+    networks:
+      - zenith-net
+
+  inventory-service:
+    image: zenith/inventory-service:1.0
+    build:
+      context: ./inventory-service
+    pull_policy: build
+    container_name: inventory-service
+    depends_on:
+      inventory_db:
+        condition: service_healthy
+      kafka-broker:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://inventory_db:5432/inventory_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-container:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+    networks:
+      - zenith-net
+
+  catalog-service:
+    image: zenith/catalog-service:1.0
+    build:
+      context: ./catalog-service
+    pull_policy: build
+    container_name: catalog-service
+    depends_on:
+      catalog_db:
+        condition: service_healthy
+      kafka-broker:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://catalog_db:5432/catalog_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-container:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - SPRING_DATA_REDIS_HOST=redis
+    networks:
+      - zenith-net
 networks:
   zenith-net:
     external: true
