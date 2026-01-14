@@ -3,13 +3,6 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
-  eureka:
-    client:
-      healthcheck:
-        enabled: true
-      service-url:
-        defaultZone: http://localhost:8761/eureka
-
     instance:
       status-page-url-path: /actuator/info
       health-check-url-path: /actuator/health
@@ -22,16 +15,18 @@ spring:
   application:
     name: catalog-service
   data:
+    redis:
+      host: redis
     elasticsearch:
       repositories:
         enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/catalog_db
+    url: jdbc:postgresql://catalog_db:5434/catalog_db
     username: user
     password: password
     driver-class-name: org.postgresql.Driver
   elasticsearch:
-    uris: http://localhost:9200
+    uris: elasticsearch:9200
     socket-timeout: 30s
     connection-timeout: 10s
     rest:
@@ -49,7 +44,7 @@ spring:
   kafka:
     template:
       observation-enabled: true
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka-broker:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -63,7 +58,7 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: "http://localhost:9411/api/v2/spans"
+      endpoint: "http://zipkin:9411/api/v2/spans"
   oltp:
     matrics:
       export:
@@ -84,3 +79,8 @@ logging:
     level: "%5p [${spring.application.name:-}, %X{traceId:-}, %X{spanId:-}]"
 server:
   port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
