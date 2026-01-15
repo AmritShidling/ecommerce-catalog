@@ -1,5 +1,17 @@
 
 spring:
+  ai:
+    openai:
+      api-key: '${API-KEY}'
+      embedding:
+        options:
+          model: text-embedding-3-small
+    vectorstore:
+      pgvector:
+        intialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE-DISTANCE
+        dimensions: 1536
   cloud:
     compatibility-verifier:
       enabled: false

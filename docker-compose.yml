@@ -37,7 +37,7 @@ services:
       - zenith-net
 
   catalog_db:
-    image: postgres:16
+    image: pgvector/pgvector:pg17
     container_name: catalog_db
     pull_policy: if_not_present
     environment:
