@@ -1,0 +1,17 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: recommendation-service
+  threads:
+    virtual:
+      enabled: true
+
+catalog:
+  service:
+    url: http://host.docker.internal:8081
+eureka:
+  client:
+    service-url:
+      defaultZone=http://eureka-server:8761/eureka/:

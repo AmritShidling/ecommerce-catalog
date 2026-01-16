@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductProducer productProducer;
 
+    private final ApplicationEventPublisher eventPublisher;
     @Override
     @Observed(name = "get.product")
     public ProductResponseDTO saveProduct(ProductRequestDTO productRequestDTO) {
@@ -40,6 +42,11 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity entity = productMapper.toEntity(productRequestDTO);
         entity.setCreatedAt(LocalDateTime.now());
         ProductEntity savedProduct = productJpaRepository.save(entity);
+
+
+        eventPublisher.publishEvent(savedProduct);
+
+
         ProductDocument document = productMapper.toDocument(savedProduct);
         try {
             productElasticRepository.save(document);

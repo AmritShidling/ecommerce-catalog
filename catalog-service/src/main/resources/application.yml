@@ -1,17 +1,16 @@
 
 spring:
   ai:
-    openai:
-      api-key: '${API-KEY}'
+    ollama:
+      base-url: http://host.docker.internal:11434
       embedding:
         options:
-          model: text-embedding-3-small
+          model: mxbai-embed-large
     vectorstore:
       pgvector:
-        intialize-schema: true
-        index-type: HNSW
-        distance-type: COSINE-DISTANCE
-        dimensions: 1536
+        initialize-schema: true
+        dimensions: 1024
+        distance-type: COSINE_DISTANCE
   cloud:
     compatibility-verifier:
       enabled: false
