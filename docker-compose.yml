@@ -243,6 +243,19 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
     networks:
       - zenith-net
+    ports:
+      - "8081:8081"
+
+
+  recommendation-service:
+    build: ./recommendation-service
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - catalog-service
 networks:
   zenith-net:
     external: true
