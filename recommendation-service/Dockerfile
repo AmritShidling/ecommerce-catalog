@@ -10,10 +10,10 @@ RUN mvn clean package -DskipTests
 # Stage 2: Create the final lightweight image
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/*.jar recommendation-service.jar
 
-# Expose the port we defined in application.properties
+# Set the active profile if needed
+ENV SPRING_PROFILES_ACTIVE=docker
+
 EXPOSE 8084
-
-# Run with optimizations for Virtual Threads
-ENTRYPOINT ["java", "-XX:+UseZGC", "-XX:+ZGenerational", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "recommendation-service.jar"]

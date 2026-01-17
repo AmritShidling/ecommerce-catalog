@@ -10,8 +10,15 @@ spring:
 
 catalog:
   service:
-    url: http://host.docker.internal:8081
+    url: ${CATALOG_SERVICE_URL:http://catalog-service:8081}
+
 eureka:
   client:
+    healthcheck:
+      enabled: true
     service-url:
-      defaultZone=http://eureka-server:8761/eureka/:
+      defaultZone: http://eureka-container:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health

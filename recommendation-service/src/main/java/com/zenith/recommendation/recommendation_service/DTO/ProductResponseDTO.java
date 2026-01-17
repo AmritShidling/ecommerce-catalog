@@ -1,4 +1,4 @@
-package com.zenith.recommendation.recommendation_service;
+package com.zenith.recommendation.recommendation_service.DTO;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
