@@ -248,14 +248,25 @@ services:
 
 
   recommendation-service:
-    build: ./recommendation-service
+    build:
+      context: ./recommendation-service
+    container_name: recommendation-service
+    pull_policy: build
+    depends_on:
+      catalog-service:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-container:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - CATALOG_SERVICE_URL=http://catalog-service:8081
+    networks:
+      - zenith-net
     ports:
       - "8084:8084"
-    environment:
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
-    depends_on:
-      - eureka-server
-      - catalog-service
+
 networks:
   zenith-net:
     external: true

@@ -9,12 +9,8 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Step 2: Create the runtime image
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar inventory-service.jar
-
-# Set the active profile if needed
-ENV SPRING_PROFILES_ACTIVE=docker
-
-EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "inventory-service.jar"]
+# This line is the most important - it grabs the JAR you just built
+COPY target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
