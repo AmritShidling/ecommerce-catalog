@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recommendations")
+@RequestMapping("/v1/recommendations")
 @Slf4j
 public class RecommendationController {
     private final CatalogClient catalogClient;

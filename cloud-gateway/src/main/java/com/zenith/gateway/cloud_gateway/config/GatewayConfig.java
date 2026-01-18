@@ -38,4 +38,12 @@ public class GatewayConfig {
                 .filter(lb("ORDER-SERVICE"))
                 .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> recommendationRoute() {
+        return route("recommendation-service")
+                .route(path("/v1/recommendations/**"), http())
+                .filter(lb("RECOMMENDATION-SERVICE"))
+                .build();
+    }
 }

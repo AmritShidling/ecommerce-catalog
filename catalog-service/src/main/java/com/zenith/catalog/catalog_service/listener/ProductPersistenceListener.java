@@ -1,6 +1,7 @@
 package com.zenith.catalog.catalog_service.listener;
 
 import com.zenith.catalog.catalog_service.entity.ProductEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class ProductPersistenceListener {
     private final VectorStore vectorStore;
 
@@ -22,6 +24,7 @@ public class ProductPersistenceListener {
     @Async // Don't make the Admin wait for the AI to finish
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onProductSaved(ProductEntity product) {
+        log.info(">>> Starting AI Vectorization for: {}", product.getName());
         // We use the data from your DTO fields to create the AI 'Document'
         Document document = new Document(
                 String.format("Name: %s. Description: %s. Category: %s.",
